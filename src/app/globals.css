@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+/* ---- Smriti design tokens (white / minimal / Apple-style) ---------------- */
+@theme {
+  --font-sans: var(--font-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-serif: var(--font-serif), ui-serif, Georgia, Cambria, serif;
+
+  /* neutrals */
+  --color-canvas: #ffffff;
+  --color-ink: #0a0a0a;
+  --color-muted: #64748b; /* slate-500 */
+  --color-line: #e9ecf2;
+
+  /* single restrained accent */
+  --color-accent: #0080ff;
+  --color-accent-soft: #e8f2ff;
+
+  /* severity dots */
+  --color-sev1: #ef4444;
+  --color-sev2: #f59e0b;
+  --color-sev3: #94a3b8;
+}
+
+/* subtle cool gradient field — stays light and spacious */
+body {
+  background:
+    radial-gradient(1100px 520px at 50% -12%, rgba(99, 102, 241, 0.06), transparent 62%),
+    linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+  background-attachment: fixed;
+  color: var(--color-ink);
+}
+
+/* soft glassmorphic panel used by the graph container */
+@utility glass {
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+/* recall glow/pulse for the matched graph node */
+@keyframes smriti-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 128, 255, 0.45); }
+  50% { box-shadow: 0 0 0 10px rgba(0, 128, 255, 0); }
+}
+@keyframes smriti-spring-in {
+  0% { opacity: 0; transform: scale(0.6); }
+  70% { transform: scale(1.06); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.smriti-pulse { animation: smriti-pulse 1.6s ease-out infinite; }
+.smriti-spring-in { animation: smriti-spring-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .smriti-pulse, .smriti-spring-in { animation: none; }
+}

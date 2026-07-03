@@ -2,7 +2,14 @@
 import { useMemo, useRef, useState } from "react";
 import type { Incident, SmritiGraph, SmritiNodeType } from "@/lib/types";
 import type { RecallResponse } from "@/lib/client-api";
-import { layoutGraph, viewBoxFor, type Pos } from "@/lib/graph-layout";
+import {
+  layoutGraph,
+  fitToBox,
+  relaxOverlaps,
+  GRAPH_W,
+  GRAPH_H,
+  type Pos,
+} from "@/lib/graph-layout";
 import { nodeDetail } from "@/lib/node-detail";
 import { cn } from "./ui";
 
@@ -51,8 +58,13 @@ export function InteractiveGraph({
   const [selected, setSelected] = useState<string | null>(null);
   const [pop, setPop] = useState<{ x: number; y: number } | null>(null);
 
-  const pos = useMemo(() => layoutGraph(graph), [graph]);
-  const viewBox = useMemo(() => viewBoxFor(pos), [pos]);
+  const pos = useMemo(() => {
+    const raw = layoutGraph(graph, { width: 1600, height: 920, iterations: 400 });
+    const fitted = fitToBox(raw, GRAPH_W, GRAPH_H);
+    const radii = new Map(graph.nodes.map((n) => [n.id, radius(n.weight)] as const));
+    return relaxOverlaps(fitted, radii);
+  }, [graph]);
+  const viewBox = `0 0 ${GRAPH_W} ${GRAPH_H}`;
 
   const neighbors = useMemo(() => {
     const m = new Map<string, Set<string>>();
@@ -148,6 +160,13 @@ export function InteractiveGraph({
           if (!p) return null;
           const r = radius(n.weight);
           const dim = litSet ? !litSet.has(n.id) : false;
+          // Declutter: label only hub nodes (services + root causes) by default;
+          // incidents/engineers get labels when focused or matched.
+          const showLabel =
+            n.type === "service" ||
+            n.type === "root_cause" ||
+            n.id === highlightNodeId ||
+            (litSet ? litSet.has(n.id) : false);
           return (
             <g
               key={n.id}
@@ -162,14 +181,16 @@ export function InteractiveGraph({
                 stroke="var(--node-stroke)"
                 strokeWidth={2.5}
               />
-              <text
-                x={p.x}
-                y={p.y + r + 13}
-                textAnchor="middle"
-                style={{ fontSize: 10.5, fill: "var(--ink-2)", pointerEvents: "none" }}
-              >
-                {n.label}
-              </text>
+              {showLabel && (
+                <text
+                  x={p.x}
+                  y={p.y + r + 13}
+                  textAnchor="middle"
+                  style={{ fontSize: 10.5, fill: "var(--ink-2)", pointerEvents: "none" }}
+                >
+                  {n.label}
+                </text>
+              )}
             </g>
           );
         })}

@@ -85,9 +85,17 @@ export function layoutGraph(
   return pos;
 }
 
-// Bounding box (with padding) → an SVG viewBox string that always fits the graph.
-export function viewBoxFor(pos: Map<string, Pos>, pad = 70): string {
-  if (pos.size === 0) return "0 0 1200 720";
+// Rescale positions uniformly (preserving shape) to fill a fixed WxH box with
+// padding, then center. This guarantees the graph always fills the canvas at a
+// consistent, visible node size regardless of how the force sim spread out —
+// paired with a fixed viewBox on the SVG.
+export function fitToBox(
+  pos: Map<string, Pos>,
+  width = 1200,
+  height = 600,
+  pad = 70,
+): Map<string, Pos> {
+  if (pos.size === 0) return pos;
   let minX = Infinity,
     minY = Infinity,
     maxX = -Infinity,
@@ -98,7 +106,51 @@ export function viewBoxFor(pos: Map<string, Pos>, pad = 70): string {
     maxX = Math.max(maxX, p.x);
     maxY = Math.max(maxY, p.y);
   }
-  const w = maxX - minX + pad * 2;
-  const h = maxY - minY + pad * 2;
-  return `${minX - pad} ${minY - pad} ${w} ${h}`;
+  const bw = Math.max(maxX - minX, 1);
+  const bh = Math.max(maxY - minY, 1);
+  const scale = Math.min((width - pad * 2) / bw, (height - pad * 2) / bh);
+  const offX = (width - bw * scale) / 2;
+  const offY = (height - bh * scale) / 2;
+  const out = new Map<string, Pos>();
+  for (const [id, p] of pos) {
+    out.set(id, { x: (p.x - minX) * scale + offX, y: (p.y - minY) * scale + offY });
+  }
+  return out;
+}
+
+export const GRAPH_W = 1200;
+export const GRAPH_H = 600;
+
+// Push apart any nodes closer than their combined radii (+pad). Removes the
+// overlapping "clumps" the force sim leaves within tightly-connected clusters.
+export function relaxOverlaps(
+  pos: Map<string, Pos>,
+  radii: Map<string, number>,
+  opts: { iterations?: number; pad?: number } = {},
+): Map<string, Pos> {
+  const iters = opts.iterations ?? 70;
+  const pad = opts.pad ?? 10;
+  const ids = [...pos.keys()];
+  for (let it = 0; it < iters; it++) {
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = i + 1; j < ids.length; j++) {
+        const a = pos.get(ids[i])!;
+        const b = pos.get(ids[j])!;
+        const minD = (radii.get(ids[i]) ?? 10) + (radii.get(ids[j]) ?? 10) + pad;
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const d = Math.hypot(dx, dy) || 0.01;
+        if (d < minD) {
+          const push = (minD - d) / 2;
+          const ux = dx / d;
+          const uy = dy / d;
+          a.x -= ux * push;
+          a.y -= uy * push;
+          b.x += ux * push;
+          b.y += uy * push;
+        }
+      }
+    }
+  }
+  return pos;
 }

@@ -65,15 +65,15 @@ export function PillFilters({
             className={cn(
               "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
               isActive
-                ? "border-ink bg-ink text-white"
-                : "border-line bg-white/70 text-ink hover:border-ink/20",
+                ? "border-btnp bg-btnp text-btnp-ink"
+                : "border-line bg-panel text-ink-2 hover:border-accent/40",
             )}
           >
             {p.label}
             <span
               className={cn(
                 "rounded-full px-1.5 text-[10px]",
-                isActive ? "bg-white/20 text-white" : "bg-black/[0.05] text-muted",
+                isActive ? "bg-btnp-ink/20 text-btnp-ink" : "bg-line text-ink-3",
               )}
             >
               {p.n}

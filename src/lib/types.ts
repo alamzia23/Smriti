@@ -66,6 +66,7 @@ export type SmritiGraphNode = {
   label: string;
   type: SmritiNodeType;
   rawType: string;
+  weight?: number; // relative importance → node radius
 };
 export type SmritiGraphEdge = {
   id: string;

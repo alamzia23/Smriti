@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smriti — Prototype v3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FAFBFD; --panel:#FFFFFF; --ink:#0A0C10; --ink-2:#4B5563; --ink-3:#9CA3AF;
+    --line:#E7EAF0; --accent:#0080FF; --accent-soft:#EAF4FF;
+    --sev1:#E5484D; --sev2:#F5A623; --sev3:#9CA3AF;
+    --radius:20px; --shadow:0 1px 2px rgba(10,12,16,.04), 0 10px 30px rgba(10,12,16,.06);
+    --glass:rgba(255,255,255,.72); --dotgrid:#E3E8F0; --node-stroke:#FFFFFF;
+    --heroglow:#EDF4FF; --btn-primary-bg:#0A0C10; --btn-primary-ink:#FFFFFF;
+  }
+  [data-theme="dark"]{
+    --bg:#0B0E14; --panel:#12151D; --ink:#F2F4F8; --ink-2:#A6ADBB; --ink-3:#697080;
+    --line:#232836; --accent:#4D9FFF; --accent-soft:rgba(77,159,255,.14);
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 12px 34px rgba(0,0,0,.35);
+    --glass:rgba(18,21,29,.72); --dotgrid:#1B2130; --node-stroke:#12151D;
+    --heroglow:rgba(38,66,110,.35); --btn-primary-bg:#F2F4F8; --btn-primary-ink:#0B0E14;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);min-width:1280px;
+    background:radial-gradient(1100px 520px at 50% -8%, var(--heroglow) 0%, transparent 62%), var(--bg);
+    transition:background .3s,color .3s}
+  .serif-i{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400}
+
+  /* Top bar */
+  .topbar{display:flex;align-items:center;gap:16px;padding:16px 36px;position:sticky;top:0;z-index:20;
+    background:var(--glass);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:baseline;gap:10px}
+  .brand .mark{font-size:23px;font-weight:800;letter-spacing:-.5px}
+  .brand .dev{font-family:'Instrument Serif',serif;font-size:19px;color:var(--accent)}
+  .brand .tag{font-size:10.5px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;margin-left:4px}
+  .status{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2)}
+  .dot{width:7px;height:7px;border-radius:50%;background:#22C55E;box-shadow:0 0 0 3px rgba(34,197,94,.15)}
+  .spacer{flex:1}
+  .btn{display:inline-flex;align-items:center;gap:7px;border-radius:999px;font-size:13px;font-weight:600;
+    padding:9px 17px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;transition:background .2s}
+  .btn.primary{background:var(--btn-primary-bg);color:var(--btn-primary-ink);border-color:var(--btn-primary-bg)}
+  .btn.ghost{background:transparent}
+  .btn.icon{padding:9px 12px;font-size:15px}
+  .user{display:flex;align-items:center;gap:9px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:5px 13px 5px 5px;font-size:13px;font-weight:600}
+  .avatar{width:27px;height:27px;border-radius:50%;background:linear-gradient(135deg,#0080FF,#66B2FF);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+
+  /* Hero */
+  .hero{position:relative;padding:72px 36px 56px;min-height:430px}
+  .hero-center{max-width:760px;margin:0 auto;text-align:center;position:relative;z-index:2}
+  .hero h1{font-size:56px;line-height:1.04;font-weight:800;letter-spacing:-2px}
+  .hero h1 .serif-i{color:var(--accent);font-weight:400}
+  .hero .sub{margin-top:16px;font-size:15.5px;color:var(--ink-2);line-height:1.6}
+  .cmdbar{margin:26px auto 0;max-width:640px;display:flex;align-items:center;gap:10px;background:var(--panel);
+    border:1px solid var(--line);border-radius:999px;padding:9px 9px 9px 20px;box-shadow:var(--shadow)}
+  .cmdbar input{flex:1;border:0;outline:0;font-size:14.5px;background:transparent;color:var(--ink)}
+  .cmdbar input::placeholder{color:var(--ink-3)}
+  .micro{margin-top:18px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+
+  .float{position:absolute;width:270px;background:var(--glass);backdrop-filter:blur(10px);
+    border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:14px 16px;z-index:1}
+  .float .row1{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink-3)}
+  .sev{width:7px;height:7px;border-radius:50%;display:inline-block}
+  .s1{background:var(--sev1)} .s2{background:var(--sev2)} .s3{background:var(--sev3)}
+  .float .title{font-size:13px;font-weight:600;margin-top:6px;line-height:1.4}
+  .float .foot{display:flex;gap:10px;font-size:11px;color:var(--ink-3);margin-top:7px}
+  .badge{font-size:10px;font-weight:700;color:var(--accent);letter-spacing:.08em}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--accent);
+    background:var(--accent-soft);border-radius:999px;padding:4px 11px}
+  .fl-1{left:44px;top:96px;transform:rotate(-4deg)}
+  .fl-2{left:92px;top:262px;transform:rotate(2.5deg)}
+  .fl-3{right:48px;top:92px;transform:rotate(3deg)}
+  .fl-4{right:96px;top:268px;transform:rotate(-2.5deg)}
+  .float .kv{font-size:12px;color:var(--ink-2);margin-top:8px;line-height:1.5}
+  .float code, .pop code, .recall .v code{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:11px}
+
+  /* Graph */
+  .graph-wrap{padding:0 36px}
+  .graph-panel{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);overflow:hidden}
+  .graph-head{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--line)}
+  .graph-head h3{font-size:14px;font-weight:700}
+  .graph-head .meta{font-size:12px;color:var(--ink-3)}
+  .canvas{position:relative;height:600px;background:radial-gradient(circle at 1px 1px,var(--dotgrid) 1px,transparent 1.6px);background-size:26px 26px}
+  svg text{font-family:'Inter';font-size:10.5px;fill:var(--ink-2);pointer-events:none}
+  .edge{stroke:var(--line);stroke-width:1.3;fill:none;transition:opacity .25s,stroke .25s}
+  .edge.hot{stroke:var(--accent);stroke-width:2;stroke-dasharray:5 4;animation:dash 1.2s linear infinite}
+  @keyframes dash{to{stroke-dashoffset:-18}}
+  g.n{cursor:pointer}
+  g.n circle.node{stroke:var(--node-stroke);stroke-width:2.5;transition:opacity .25s, r .15s}
+  g.n:hover circle.node{filter:brightness(1.12)}
+  .halo{animation:pulse 1.8s ease-in-out infinite;fill:var(--accent);pointer-events:none}
+  @keyframes pulse{0%,100%{opacity:.22}50%{opacity:.48}}
+  .canvas.selecting g.n{opacity:.18}
+  .canvas.selecting .edge{opacity:.08}
+  .canvas.selecting g.n.lit{opacity:1}
+  .canvas.selecting .edge.lit{opacity:1;stroke:var(--accent);stroke-width:2}
+  .hint{position:absolute;top:16px;left:18px;font-size:11.5px;color:var(--ink-3);background:var(--glass);
+    backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:999px;padding:6px 13px}
+  .legend{position:absolute;left:18px;bottom:16px;display:flex;gap:14px;background:var(--glass);backdrop-filter:blur(8px);
+    border:1px solid var(--line);border-radius:12px;padding:8px 15px;font-size:11.5px;color:var(--ink-2)}
+  .lg{display:flex;align-items:center;gap:6px}
+  .lg i{width:9px;height:9px;border-radius:50%;display:inline-block}
+
+  .recall{position:absolute;right:20px;top:20px;width:320px;background:var(--glass);backdrop-filter:blur(14px);
+    border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:16px 18px;transition:opacity .25s}
+  .canvas.selecting .recall{opacity:.15;pointer-events:none}
+  .recall h4{font-size:14.5px;font-weight:700;margin-top:10px;line-height:1.35}
+  .recall .k{font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);font-weight:700;margin-top:12px}
+  .recall .v{font-size:12.5px;line-height:1.55;margin-top:3px;color:var(--ink)}
+  .recall .foot{display:flex;gap:8px;margin-top:14px}
+  .recall .btn{padding:7px 13px;font-size:12px}
+
+  .pop{position:absolute;width:280px;background:var(--glass);backdrop-filter:blur(14px);border:1px solid var(--line);
+    border-radius:16px;box-shadow:var(--shadow);padding:14px 16px;z-index:9;display:none;
+    animation:popin .18s ease-out}
+  @keyframes popin{from{opacity:0;transform:scale(.92) translateY(6px)}to{opacity:1;transform:scale(1) translateY(0)}}
+  .pop .ptype{font-size:10px;letter-spacing:.11em;text-transform:uppercase;font-weight:700;color:var(--accent)}
+  .pop h5{font-size:14px;font-weight:700;margin-top:5px}
+  .pop .pline{font-size:12px;color:var(--ink-2);line-height:1.55;margin-top:7px}
+  .pop .pconn{font-size:11px;color:var(--ink-3);margin-top:9px}
+  .pop .foot{display:flex;gap:7px;margin-top:11px}
+  .pop .btn{padding:6px 12px;font-size:11.5px}
+  .pop .x{position:absolute;top:9px;right:12px;color:var(--ink-3);cursor:pointer;font-size:13px}
+
+  /* Cards / footer */
+  .feed{padding:26px 36px 8px}
+  .feed-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .feed-head h3{font-size:15px;font-weight:700}
+  .pills{display:flex;gap:7px}
+  .pill{font-size:12px;font-weight:600;padding:6px 13px;border-radius:999px;border:1px solid var(--line);color:var(--ink-2);background:var(--panel)}
+  .pill.on{background:var(--btn-primary-bg);border-color:var(--btn-primary-bg);color:var(--btn-primary-ink)}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .icard{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:15px 17px}
+  .icard .row1{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink-3)}
+  .icard .title{font-size:13px;font-weight:600;margin-top:6px;line-height:1.4}
+  .icard .foot{display:flex;gap:10px;font-size:11px;color:var(--ink-3);margin-top:8px}
+  .footer{display:flex;align-items:center;justify-content:center;gap:10px;padding:30px 0 34px;font-size:11.5px;color:var(--ink-3)}
+  .op{font-family:ui-monospace,monospace;font-size:11px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:3px 9px;color:var(--ink-2)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span class="mark">Smriti</span><span class="dev">स्मृति</span><span class="tag">Incident memory</span></div>
+  <div class="status"><span class="dot"></span> Cognee Cloud · connected</div>
+  <div class="spacer"></div>
+  <button class="btn icon" id="themeBtn" title="Toggle theme">🌙</button>
+  <button class="btn ghost">Demo controls ▾</button>
+  <button class="btn primary">+ Simulate resolved incident</button>
+  <div class="user"><span class="avatar">A</span> alam <span style="color:var(--ink-3)">▾</span></div>
+</div>
+
+<div class="hero">
+  <div class="float fl-1">
+    <div class="row1"><span class="sev s1"></span> INC-2026-104 · CheckoutAPI</div>
+    <div class="title">TLS certificate expiry — checkout hard down</div>
+    <div class="foot"><span>via PagerDuty</span><span>fixed by priya</span><span>2d ago</span></div>
+  </div>
+  <div class="float fl-2">
+    <div class="row1"><span class="sev s2"></span> INC-2026-118 · PaymentService <span class="badge">● NEW</span></div>
+    <div class="title">OOMKilled — pods restarting under load</div>
+    <div class="foot"><span>via webhook</span><span>just now</span></div>
+  </div>
+  <div class="float fl-3">
+    <span class="chip">✦ Pattern detected · improve()</span>
+    <div class="title">PaymentService: 4 memory incidents this quarter — chronic issue</div>
+    <div class="foot"><span>memory consolidated 2h ago</span></div>
+  </div>
+  <div class="float fl-4">
+    <span class="chip">📋 On-call handoff brief</span>
+    <div class="kv">Priya starts on-call in 3h. Smriti briefed her on 5 active patterns &amp; last week's fixes.</div>
+    <div class="foot"><span>auto-generated from memory</span></div>
+  </div>
+
+  <div class="hero-center">
+    <h1>Fix it once. <span class="serif-i">Remember it forever.</span></h1>
+    <p class="sub">Smriti gives your on-call team a shared memory of every incident —<br>so the same fire never burns twice.</p>
+    <div class="cmdbar">
+      <span style="color:var(--ink-3)">⌕</span>
+      <input value="PaymentService is consuming high memory and pods are getting killed">
+      <button class="btn primary">✦ Ask Smriti</button>
+    </div>
+    <div class="micro">Powered by Cognee · Zero manual entry · Self-updating memory</div>
+  </div>
+</div>
+
+<div class="graph-wrap">
+  <div class="graph-panel">
+    <div class="graph-head">
+      <h3>Incident memory graph</h3>
+      <span class="meta">106 nodes · 111 edges · recall path highlighted</span>
+    </div>
+    <div class="canvas" id="canvas">
+      <svg width="100%" height="100%" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" id="gsvg">
+        <path class="edge" data-c="svc-pay,inc-118" d="M480 300 Q560 230 600 180"/>
+        <path class="edge hot" data-c="svc-pay,inc-042" d="M480 300 Q400 370 340 420"/>
+        <path class="edge hot" data-c="inc-042,rc-pool" d="M340 420 Q260 460 200 480"/>
+        <path class="edge hot" data-c="inc-042,rc-oom" d="M340 420 Q430 480 520 520"/>
+        <path class="edge" data-c="inc-118,rc-oom" d="M600 180 Q560 360 520 520"/>
+        <path class="edge" data-c="inc-042,eng-alam" d="M340 420 Q200 300 80 150"/>
+        <path class="edge" data-c="svc-pay,inc-104" d="M480 300 Q650 330 720 350"/>
+        <path class="edge" data-c="svc-chk,inc-104" d="M820 220 Q770 290 720 350"/>
+        <path class="edge" data-c="svc-chk,rc-cert" d="M820 220 Q880 180 930 140"/>
+        <path class="edge" data-c="rc-cert,eng-priya" d="M930 140 Q1040 125 1130 120"/>
+        <path class="edge" data-c="svc-argo,inc-097" d="M950 420 Q1000 360 1050 300"/>
+        <path class="edge" data-c="inc-097,rc-helm" d="M1050 300 Q1090 390 1120 480"/>
+        <path class="edge" data-c="svc-prom,inc-089" d="M250 180 Q200 250 150 320"/>
+        <path class="edge" data-c="inc-089,eng-alam" d="M150 320 Q110 240 80 150"/>
+        <path class="edge" data-c="inc-118,eng-dev" d="M600 180 Q610 120 620 60"/>
+        <path class="edge" data-c="inc-076,svc-argo" d="M880 520 Q915 470 950 420"/>
+
+        <circle class="halo" cx="340" cy="420" r="26"/>
+
+        <g class="n" data-id="svc-pay"><circle class="node" cx="480" cy="300" r="18" fill="#0080FF"/><text x="480" y="335" text-anchor="middle">PaymentService</text></g>
+        <g class="n" data-id="svc-chk"><circle class="node" cx="820" cy="220" r="15" fill="#0080FF"/><text x="820" y="252" text-anchor="middle">CheckoutAPI</text></g>
+        <g class="n" data-id="svc-argo"><circle class="node" cx="950" cy="420" r="13" fill="#0080FF"/><text x="950" y="450" text-anchor="middle">ArgoCD</text></g>
+        <g class="n" data-id="svc-prom"><circle class="node" cx="250" cy="180" r="13" fill="#0080FF"/><text x="250" y="152" text-anchor="middle">Prometheus</text></g>
+        <g class="n" data-id="inc-042"><circle class="node" cx="340" cy="420" r="13" fill="#0A0C10"/><text x="340" y="452" text-anchor="middle">INC-2025-042</text></g>
+        <g class="n" data-id="inc-118"><circle class="node" cx="600" cy="180" r="11" fill="#0A0C10"/><text x="600" y="153" text-anchor="middle">INC-2026-118</text></g>
+        <g class="n" data-id="inc-104"><circle class="node" cx="720" cy="350" r="11" fill="#0A0C10"/><text x="720" y="381" text-anchor="middle">INC-2026-104</text></g>
+        <g class="n" data-id="inc-097"><circle class="node" cx="1050" cy="300" r="10" fill="#0A0C10"/><text x="1050" y="329" text-anchor="middle">INC-2026-097</text></g>
+        <g class="n" data-id="inc-089"><circle class="node" cx="150" cy="320" r="10" fill="#0A0C10"/><text x="150" y="349" text-anchor="middle">INC-2026-089</text></g>
+        <g class="n" data-id="inc-076"><circle class="node" cx="880" cy="520" r="10" fill="#0A0C10"/><text x="880" y="549" text-anchor="middle">INC-2026-076</text></g>
+        <g class="n" data-id="rc-pool"><circle class="node" cx="200" cy="480" r="11" fill="#F5A623"/><text x="200" y="510" text-anchor="middle">conn-pool leak</text></g>
+        <g class="n" data-id="rc-cert"><circle class="node" cx="930" cy="140" r="10" fill="#F5A623"/><text x="930" y="113" text-anchor="middle">cert expiry</text></g>
+        <g class="n" data-id="rc-helm"><circle class="node" cx="1120" cy="480" r="10" fill="#F5A623"/><text x="1120" y="509" text-anchor="middle">helm misconfig</text></g>
+        <g class="n" data-id="rc-oom"><circle class="node" cx="520" cy="520" r="11" fill="#F5A623"/><text x="520" y="550" text-anchor="middle">OOMKill</text></g>
+        <g class="n" data-id="eng-alam"><circle class="node" cx="80" cy="150" r="10" fill="#8B93A7"/><text x="80" y="123" text-anchor="middle">alam</text></g>
+        <g class="n" data-id="eng-priya"><circle class="node" cx="1130" cy="120" r="9" fill="#8B93A7"/><text x="1130" y="94" text-anchor="middle">priya</text></g>
+        <g class="n" data-id="eng-dev"><circle class="node" cx="620" cy="60" r="9" fill="#8B93A7"/><text x="620" y="36" text-anchor="middle">dev</text></g>
+      </svg>
+
+      <div class="hint">👆 Click any node to explore its memory</div>
+
+      <div class="recall" id="recallCard">
+        <span class="chip">✦ 94% match · seen before</span>
+        <h4>INC-2025-042 — Connection-pool leak on PaymentService</h4>
+        <div class="k">Root cause</div>
+        <div class="v">Pool not releasing idle connections → memory exhaustion → OOMKill.</div>
+        <div class="k">Fix that worked</div>
+        <div class="v"><code>maxIdleConnections=10</code> in Helm values + memory limit.</div>
+        <div class="k">Context</div>
+        <div class="v">Fixed by alam · Sep 2025 · recurred 2× on this service.</div>
+        <div class="foot"><button class="btn primary">Open runbook</button><button class="btn">Postmortem</button></div>
+      </div>
+
+      <div class="pop" id="pop">
+        <span class="x" id="popX">✕</span>
+        <div class="ptype" id="popType"></div>
+        <h5 id="popTitle"></h5>
+        <div class="pline" id="popLine"></div>
+        <div class="pconn" id="popConn"></div>
+        <div class="foot">
+          <button class="btn primary">✦ Ask Smriti about this</button>
+          <button class="btn">Details</button>
+        </div>
+      </div>
+
+      <div class="legend">
+        <span class="lg"><i style="background:#0A0C10"></i>incident</span>
+        <span class="lg"><i style="background:#0080FF"></i>service</span>
+        <span class="lg"><i style="background:#F5A623"></i>root cause</span>
+        <span class="lg"><i style="background:#8B93A7"></i>engineer</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="feed">
+  <div class="feed-head">
+    <h3>Remembered incidents</h3>
+    <div class="pills">
+      <span class="pill on">All 18</span><span class="pill">PaymentService 4</span>
+      <span class="pill">SEV1 3</span><span class="pill">memory 5</span><span class="pill">helm 3</span>
+    </div>
+  </div>
+  <div class="grid">
+    <div class="icard"><div class="row1"><span class="sev s2"></span> INC-2026-118 · PaymentService</div><div class="title">OOMKilled — pods restarting under load</div><div class="foot"><span>via webhook</span><span>alam</span><span>just now</span></div></div>
+    <div class="icard"><div class="row1"><span class="sev s1"></span> INC-2026-104 · CheckoutAPI</div><div class="title">TLS certificate expiry — checkout hard down</div><div class="foot"><span>via PagerDuty</span><span>priya</span><span>2d ago</span></div></div>
+    <div class="icard"><div class="row1"><span class="sev s2"></span> INC-2026-097 · ArgoCD</div><div class="title">Sync failure after Helm values misconfig</div><div class="foot"><span>via GitHub</span><span>alam</span><span>1w ago</span></div></div>
+    <div class="icard"><div class="row1"><span class="sev s3"></span> INC-2026-089 · Prometheus</div><div class="title">Alert storm from mis-tuned recording rules</div><div class="foot"><span>via PagerDuty</span><span>dev</span><span>2w ago</span></div></div>
+  </div>
+</div>
+
+<div class="footer">
+  Powered by Cognee
+  <span class="op">remember()</span><span class="op">recall()</span><span class="op">improve()</span><span class="op">forget()</span>
+</div>
+
+<script>
+  const themeBtn = document.getElementById('themeBtn');
+  themeBtn.addEventListener('click', () => {
+    const html = document.documentElement;
+    const dark = html.getAttribute('data-theme') === 'dark';
+    html.setAttribute('data-theme', dark ? 'light' : 'dark');
+    themeBtn.textContent = dark ? '🌙' : '☀️';
+  });
+
+  const nodeInfo = {
+    'svc-pay':{t:'Service',h:'PaymentService',l:'4 incidents remembered this quarter — flagged as chronic (memory-related). Most recent: OOMKill under load.',},
+    'svc-chk':{t:'Service',h:'CheckoutAPI',l:'2 incidents remembered. Last: SEV1 TLS certificate expiry, resolved in 38 min using recalled runbook.'},
+    'svc-argo':{t:'Service',h:'ArgoCD',l:'2 incidents remembered. Recurring theme: Helm values misconfiguration on sync.'},
+    'svc-prom':{t:'Service',h:'Prometheus',l:'1 incident remembered. Alert storm traced to mis-tuned recording rules.'},
+    'inc-042':{t:'Incident · SEV2',h:'INC-2025-042 — conn-pool leak',l:'Root cause: pool not releasing idle connections → OOMKill. Fix: maxIdleConnections=10 + memory limit. Fixed by alam.'},
+    'inc-118':{t:'Incident · SEV2 · NEW',h:'INC-2026-118 — OOMKilled pods',l:'Ingested just now via webhook. Smriti matched it 94% to INC-2025-042 — same fix applies.'},
+    'inc-104':{t:'Incident · SEV1',h:'INC-2026-104 — cert expiry',l:'Checkout hard down 38 min. Fix: rotate cert + added expiry alert 14d ahead. Fixed by priya.'},
+    'inc-097':{t:'Incident · SEV2',h:'INC-2026-097 — ArgoCD sync fail',l:'Helm values misconfig blocked sync. Fix: values schema validation in CI.'},
+    'inc-089':{t:'Incident · SEV3',h:'INC-2026-089 — alert storm',l:'Mis-tuned recording rules flooded on-call. Fix: rule review + inhibition rules.'},
+    'inc-076':{t:'Incident · SEV3',h:'INC-2026-076 — sync drift',l:'ArgoCD app drift after manual hotfix. Fix: selfHeal enabled.'},
+    'rc-pool':{t:'Root cause',h:'Connection-pool leak',l:'Seen in 2 incidents on PaymentService. Canonical fix: cap idle connections in Helm values.'},
+    'rc-cert':{t:'Root cause',h:'Certificate expiry',l:'Seen in 1 incident. Prevention: expiry alerts now fire 14 days ahead.'},
+    'rc-helm':{t:'Root cause',h:'Helm misconfiguration',l:'Seen in 3 incidents across 2 services — top recurring root cause this quarter.'},
+    'rc-oom':{t:'Root cause',h:'OOMKill',l:'Symptom cluster linked to 2 incidents. Usually downstream of memory leaks.'},
+    'eng-alam':{t:'Engineer',h:'alam',l:'Fixed 6 remembered incidents. Deep context on PaymentService memory issues — his knowledge is now shared memory.'},
+    'eng-priya':{t:'Engineer',h:'priya',l:'Fixed 3 remembered incidents. Cert & TLS specialist per memory graph.'},
+    'eng-dev':{t:'Engineer',h:'dev',l:'Fixed 2 remembered incidents, focused on observability stack.'}
+  };
+
+  const canvas = document.getElementById('canvas');
+  const pop = document.getElementById('pop');
+  const edges = [...document.querySelectorAll('.edge')];
+  const nodes = [...document.querySelectorAll('g.n')];
+
+  function clearSel(){
+    canvas.classList.remove('selecting');
+    document.querySelectorAll('.lit').forEach(e=>e.classList.remove('lit'));
+    pop.style.display='none';
+  }
+
+  nodes.forEach(g=>{
+    g.addEventListener('click',(ev)=>{
+      ev.stopPropagation();
+      clearSel();
+      const id = g.dataset.id;
+      canvas.classList.add('selecting');
+      g.classList.add('lit');
+      let conn = 0;
+      edges.forEach(e=>{
+        const c = e.dataset.c.split(',');
+        if(c.includes(id)){
+          e.classList.add('lit'); conn++;
+          const other = c[0]===id?c[1]:c[0];
+          const og = document.querySelector(`g.n[data-id="${other}"]`);
+          if(og) og.classList.add('lit');
+        }
+      });
+      const info = nodeInfo[id];
+      document.getElementById('popType').textContent = info.t;
+      document.getElementById('popTitle').textContent = info.h;
+      document.getElementById('popLine').textContent = info.l;
+      document.getElementById('popConn').textContent = `⤳ ${conn} connection${conn!==1?'s':''} in memory`;
+      const r = canvas.getBoundingClientRect();
+      let x = ev.clientX - r.left + 16, y = ev.clientY - r.top - 10;
+      if(x + 296 > r.width) x = ev.clientX - r.left - 296;
+      if(y + 210 > r.height) y = r.height - 220;
+      if(y < 10) y = 10;
+      pop.style.left = x+'px'; pop.style.top = y+'px';
+      pop.style.display='block';
+    });
+  });
+  canvas.addEventListener('click', clearSel);
+  document.getElementById('popX').addEventListener('click',(e)=>{e.stopPropagation();clearSel();});
+</script>
+</body>
+</html>

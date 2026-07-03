@@ -18,9 +18,9 @@ export function Button({
   const base =
     "inline-flex items-center justify-center gap-2 rounded-full px-5 h-11 text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40";
   const variants = {
-    primary: "bg-ink text-white hover:bg-ink/90 shadow-sm",
-    ghost: "bg-white text-ink border border-line hover:border-ink/20 hover:bg-black/[0.02]",
-    danger: "bg-white text-sev1 border border-sev1/25 hover:bg-sev1/5",
+    primary: "bg-btnp text-btnp-ink border border-btnp hover:opacity-90 shadow-soft",
+    ghost: "bg-panel text-ink border border-line hover:border-accent/40 hover:bg-accent-soft",
+    danger: "bg-panel text-sev1 border border-sev1/25 hover:bg-sev1/10",
   } as const;
   return (
     <button className={cn(base, variants[variant], className)} {...props}>

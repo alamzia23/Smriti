@@ -1,18 +1,19 @@
 "use client";
-import { useState } from "react";
-import { Search, Loader2, Sparkles } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { DEMO_ALERT } from "@/lib/config";
-import { cn } from "./ui";
 
+// Controlled command bar (value lifted to Dashboard so node popovers can prefill it).
 export function CommandBar({
+  value,
+  onChange,
   onAsk,
   loading,
 }: {
+  value: string;
+  onChange: (v: string) => void;
   onAsk: (query: string) => void;
   loading: boolean;
 }) {
-  const [value, setValue] = useState("");
-
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const q = value.trim();
@@ -22,29 +23,25 @@ export function CommandBar({
   return (
     <form
       onSubmit={submit}
-      className="mx-auto flex w-full max-w-2xl items-center gap-2 rounded-full border border-line bg-white/80 p-2 pl-5 shadow-sm backdrop-blur"
+      className="mx-auto mt-[26px] flex max-w-[640px] items-center gap-2.5 rounded-full border border-line bg-panel py-[9px] pl-5 pr-[9px] shadow-soft"
     >
-      <Search className="h-4 w-4 shrink-0 text-muted" aria-hidden />
+      <span className="text-ink-3" aria-hidden>
+        ⌕
+      </span>
       <input
         value={value}
-        onChange={(e) => setValue(e.target.value)}
-        placeholder={`Paste an alert… e.g. "${DEMO_ALERT}"`}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={`e.g. "${DEMO_ALERT}"`}
         aria-label="Paste an alert to recall past incidents"
-        className="min-w-0 flex-1 bg-transparent text-sm text-ink placeholder:text-muted/70 focus:outline-none"
+        className="min-w-0 flex-1 bg-transparent text-[14.5px] text-ink placeholder:text-ink-3 focus:outline-none"
       />
       <button
         type="submit"
         disabled={loading || !value.trim()}
-        className={cn(
-          "inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-ink px-5 text-sm font-medium text-white transition-all active:scale-[0.98] disabled:opacity-40",
-        )}
+        className="inline-flex h-[38px] shrink-0 items-center gap-1.5 rounded-full bg-btnp px-4 text-[13px] font-semibold text-btnp-ink transition-opacity hover:opacity-90 disabled:opacity-40"
       >
-        {loading ? (
-          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-        ) : (
-          <Sparkles className="h-4 w-4" aria-hidden />
-        )}
-        Ask {""}Smriti
+        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <span>✦</span>}
+        Ask Smriti
       </button>
     </form>
   );

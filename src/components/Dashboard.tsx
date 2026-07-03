@@ -1,24 +1,20 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import dynamic from "next/dynamic";
 import { Loader2 } from "lucide-react";
 import type { Incident, SmritiGraph } from "@/lib/types";
 import { api, type RecallResponse } from "@/lib/client-api";
+import { patternInsights, buildHandoffBrief } from "@/lib/insights";
+import { TopBar } from "./TopBar";
 import { Hero } from "./Hero";
-import { CommandBar } from "./CommandBar";
+import { InteractiveGraph } from "./InteractiveGraph";
 import { PillFilters, filterMatches, type Filter } from "./PillFilters";
 import { IncidentCard } from "./IncidentCard";
-import { RecallResult } from "./RecallResult";
-import { DemoControls, type Creds } from "./DemoControls";
+import { HandoffModal } from "./HandoffModal";
 import { Toast } from "./Toast";
-
-// Reactflow touches window → must be client-only (no SSR).
-const MemoryGraph = dynamic(() => import("./MemoryGraph"), {
-  ssr: false,
-  loading: () => <GraphSkeleton />,
-});
+import type { Creds } from "./DemoControls";
 
 const EMPTY_GRAPH: SmritiGraph = { nodes: [], edges: [] };
+const OPS = ["remember()", "recall()", "improve()", "forget()"];
 
 export function Dashboard() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
@@ -26,16 +22,16 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>({ kind: "all" });
 
+  const [query, setQuery] = useState("");
   const [recallLoading, setRecallLoading] = useState(false);
   const [recall, setRecall] = useState<RecallResponse | null>(null);
 
   const [creds, setCreds] = useState<Creds>({ passphrase: "", adminSecret: "" });
   const [busy, setBusy] = useState({ simulate: false, consolidate: false });
   const [toast, setToast] = useState<{ msg: string; kind: "ok" | "err" } | null>(null);
+  const [briefOpen, setBriefOpen] = useState(false);
 
-  const notify = useCallback((msg: string, kind: "ok" | "err" = "ok") => {
-    setToast({ msg, kind });
-  }, []);
+  const notify = useCallback((msg: string, kind: "ok" | "err" = "ok") => setToast({ msg, kind }), []);
 
   const refresh = useCallback(async () => {
     try {
@@ -54,11 +50,11 @@ export function Dashboard() {
   }, [refresh]);
 
   const onAsk = useCallback(
-    async (query: string) => {
+    async (q: string) => {
       setRecallLoading(true);
       setRecall(null);
       try {
-        const res = await api.recall(query);
+        const res = await api.recall(q);
         setRecall(res);
         if (!res.hits.length) notify("No grounded memory found yet", "err");
       } catch {
@@ -68,6 +64,14 @@ export function Dashboard() {
       }
     },
     [notify],
+  );
+
+  const onAskAbout = useCallback(
+    (q: string) => {
+      setQuery(q);
+      onAsk(q);
+    },
+    [onAsk],
   );
 
   const onSimulate = useCallback(async () => {
@@ -99,7 +103,7 @@ export function Dashboard() {
   const onRetire = useCallback(
     async (id: string) => {
       if (!creds.passphrase || !creds.adminSecret) {
-        notify("Open Demo controls and enter secrets to retire", "err");
+        notify("Enter demo passphrase + admin secret in Demo controls", "err");
         return;
       }
       try {
@@ -113,64 +117,79 @@ export function Dashboard() {
     [creds, notify, refresh],
   );
 
+  const insights = useMemo(() => patternInsights(incidents), [incidents]);
+  const brief = useMemo(() => buildHandoffBrief(incidents), [incidents]);
+  const briefLine =
+    incidents.length > 0
+      ? `${brief.watchFor.length} pattern${brief.watchFor.length !== 1 ? "s" : ""} to watch · ${brief.knownFixes.length} fixes to know`
+      : null;
+
   const matchedId = recall?.matchedIncidentId ?? null;
   const matchedIncident = useMemo(
     () => incidents.find((i) => i.incident_id === matchedId) ?? null,
     [incidents, matchedId],
   );
-
-  const visible = useMemo(
-    () => incidents.filter((i) => filterMatches(i, filter)),
-    [incidents, filter],
-  );
+  const visible = useMemo(() => incidents.filter((i) => filterMatches(i, filter)), [incidents, filter]);
 
   return (
-    <main className="flex-1 pb-24">
-      <Hero />
+    <div className="flex-1">
+      <TopBar
+        creds={creds}
+        setCreds={setCreds}
+        onSimulate={onSimulate}
+        onConsolidate={onConsolidate}
+        busy={busy}
+      />
 
-      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6">
-        <CommandBar onAsk={onAsk} loading={recallLoading} />
+      <Hero
+        incidents={incidents}
+        insight={insights[0]?.text ?? null}
+        briefLine={briefLine}
+        onOpenBrief={() => setBriefOpen(true)}
+        query={query}
+        setQuery={setQuery}
+        onAsk={onAsk}
+        recallLoading={recallLoading}
+      />
 
-        {recall && (
-          <RecallResult
-            result={recall}
-            matchedIncident={matchedIncident}
-            onClose={() => setRecall(null)}
-          />
-        )}
-
-        <DemoControls
-          creds={creds}
-          setCreds={setCreds}
-          onSimulate={onSimulate}
-          onConsolidate={onConsolidate}
-          busy={busy}
-        />
-
-        <section className="glass rounded-3xl p-2 shadow-sm">
-          <div className="flex items-center justify-between px-4 py-2">
-            <h2 className="text-sm font-semibold text-ink">Incident memory graph</h2>
-            <span className="text-xs text-muted">
-              {graph.nodes.length} nodes · {graph.edges.length} edges
+      {/* graph */}
+      <div className="px-9">
+        <div className="relative overflow-hidden rounded-[20px] border border-line bg-panel shadow-soft">
+          <div className="flex items-center justify-between border-b border-line px-[22px] py-4">
+            <h3 className="text-[14px] font-bold text-ink">Incident memory graph</h3>
+            <span className="text-[12px] text-ink-3">
+              {graph.nodes.length} nodes · {graph.edges.length} edges · recall path highlighted
             </span>
           </div>
-          <div className="h-[440px] w-full overflow-hidden rounded-2xl">
-            {loading ? (
-              <GraphSkeleton />
-            ) : (
-              <MemoryGraph graph={graph} highlightedIncidentId={matchedId} />
-            )}
-          </div>
-        </section>
+          {loading ? (
+            <div className="flex h-[600px] items-center justify-center">
+              <Loader2 className="h-5 w-5 animate-spin text-ink-3" />
+            </div>
+          ) : (
+            <InteractiveGraph
+              graph={graph}
+              incidents={incidents}
+              highlightedIncidentId={matchedId}
+              recall={recall}
+              matchedIncident={matchedIncident}
+              onAskAbout={onAskAbout}
+            />
+          )}
+        </div>
+      </div>
 
-        <PillFilters incidents={incidents} active={filter} onChange={setFilter} />
-
+      {/* feed */}
+      <div className="px-9 pb-2 pt-[26px]">
+        <div className="mb-3.5 flex items-center justify-between gap-4">
+          <h3 className="text-[15px] font-bold text-ink">Remembered incidents</h3>
+          <PillFilters incidents={incidents} active={filter} onChange={setFilter} />
+        </div>
         {loading ? (
-          <div className="flex justify-center py-16 text-muted">
-            <Loader2 className="h-5 w-5 animate-spin" />
+          <div className="flex justify-center py-16">
+            <Loader2 className="h-5 w-5 animate-spin text-ink-3" />
           </div>
         ) : visible.length ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
             {visible.map((inc) => (
               <IncidentCard
                 key={inc.incident_id}
@@ -181,21 +200,25 @@ export function Dashboard() {
             ))}
           </div>
         ) : (
-          <p className="py-16 text-center text-muted">No incidents match this filter.</p>
+          <p className="py-16 text-center text-ink-3">No incidents match this filter.</p>
         )}
       </div>
 
-      {toast && (
-        <Toast message={toast.msg} kind={toast.kind} onDone={() => setToast(null)} />
-      )}
-    </main>
-  );
-}
+      {/* footer */}
+      <div className="flex items-center justify-center gap-2.5 py-[30px] text-[11.5px] text-ink-3">
+        Powered by Cognee
+        {OPS.map((op) => (
+          <span
+            key={op}
+            className="rounded-lg border border-line bg-panel px-2 py-[3px] font-mono text-[11px] text-ink-2"
+          >
+            {op}
+          </span>
+        ))}
+      </div>
 
-function GraphSkeleton() {
-  return (
-    <div className="flex h-full w-full items-center justify-center rounded-2xl bg-white/40">
-      <Loader2 className="h-5 w-5 animate-spin text-muted" />
+      {briefOpen && <HandoffModal brief={brief} onClose={() => setBriefOpen(false)} />}
+      {toast && <Toast message={toast.msg} kind={toast.kind} onDone={() => setToast(null)} />}
     </div>
   );
 }

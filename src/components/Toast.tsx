@@ -24,7 +24,7 @@ export function Toast({
     >
       <div
         className={cn(
-          "flex items-center gap-2 rounded-full border bg-white/90 px-4 py-2.5 text-sm shadow-lg backdrop-blur",
+          "flex items-center gap-2 rounded-full border glass px-4 py-2.5 text-sm shadow-soft",
           kind === "ok" ? "border-line text-ink" : "border-sev1/30 text-sev1",
         )}
       >

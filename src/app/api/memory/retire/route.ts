@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { auth } from "@/auth";
 import { RetireSchema } from "@/lib/types";
 import { verifyAdmin, verifyPassphrase } from "@/lib/security";
 import { rateLimit, clientKey } from "@/lib/ratelimit";
@@ -9,9 +10,11 @@ import { jsonError, jsonOk } from "@/lib/errors";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// forget(): prune stale memory so recall stays accurate. Admin-secret +
-// passphrase + explicit confirm required (never publicly callable).
+// forget(): prune stale memory so recall stays accurate. Member session +
+// admin-secret + passphrase + explicit confirm required (never publicly callable).
 export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (session?.user?.role !== "member") return jsonError(403, "Forbidden");
   if (!verifyAdmin(req) || !verifyPassphrase(req)) {
     return jsonError(401, "Unauthorized");
   }

@@ -16,7 +16,9 @@ import type { Creds } from "./DemoControls";
 const EMPTY_GRAPH: SmritiGraph = { nodes: [], edges: [] };
 const OPS = ["remember()", "recall()", "improve()", "forget()"];
 
-export function Dashboard() {
+export type SessionUser = { name: string; role: string };
+
+export function Dashboard({ user }: { user: SessionUser }) {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [graph, setGraph] = useState<SmritiGraph>(EMPTY_GRAPH);
   const [loading, setLoading] = useState(true);
@@ -102,6 +104,10 @@ export function Dashboard() {
 
   const onRetire = useCallback(
     async (id: string) => {
+      if (user.role !== "member") {
+        notify("forget() requires a member session (GitHub sign-in)", "err");
+        return;
+      }
       if (!creds.passphrase || !creds.adminSecret) {
         notify("Enter demo passphrase + admin secret in Demo controls", "err");
         return;
@@ -114,7 +120,7 @@ export function Dashboard() {
         notify(e instanceof Error ? e.message : "Retire failed", "err");
       }
     },
-    [creds, notify, refresh],
+    [creds, notify, refresh, user.role],
   );
 
   const insights = useMemo(() => patternInsights(incidents), [incidents]);
@@ -134,6 +140,7 @@ export function Dashboard() {
   return (
     <div className="flex-1">
       <TopBar
+        user={user}
         creds={creds}
         setCreds={setCreds}
         onSimulate={onSimulate}

@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { auth } from "@/auth";
 import { verifyAdmin, verifyPassphrase } from "@/lib/security";
 import { rateLimit, clientKey } from "@/lib/ratelimit";
 import { cogneeConsolidate } from "@/lib/cognee";
@@ -8,8 +9,11 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // improve(): re-cognify the dataset to strengthen connections so recurring
-// patterns surface. Destructive/expensive → admin-secret + passphrase gated.
+// patterns surface. Destructive/expensive → member session + admin-secret +
+// passphrase gated (guests are read/recall only).
 export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (session?.user?.role !== "member") return jsonError(403, "Forbidden");
   if (!verifyAdmin(req) || !verifyPassphrase(req)) {
     return jsonError(401, "Unauthorized");
   }

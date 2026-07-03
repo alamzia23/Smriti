@@ -1,11 +1,38 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 
-// Defense-in-depth security headers on every response, including a nonce-based CSP.
-// Next.js reads the CSP from the *request* header we set here and automatically
-// adds the nonce to its own inline bootstrap scripts. We allow 'unsafe-inline'
-// for styles only — a documented, narrow relaxation required by Reactflow and
-// Next's inline style injection (script-src stays nonce-locked).
-export function proxy(request: NextRequest) {
+// Paths reachable without a session: the sign-in page, the Auth.js endpoints
+// (otherwise you could never sign in), and the incident webhook — which is
+// authenticated by its HMAC signature, not a browser session, and is called
+// server-to-server by the simulate route.
+function isPublicPath(pathname: string): boolean {
+  return (
+    pathname === "/signin" ||
+    pathname.startsWith("/api/auth") ||
+    pathname === "/api/incidents/webhook"
+  );
+}
+
+// Proxy = security headers (nonce-based CSP) + session gate. Wrapped with
+// Auth.js `auth()` so `request.auth` is the current session on every request.
+// Defense-in-depth: Next.js reads the CSP from the *request* header we set here
+// and adds the nonce to its own inline bootstrap scripts. 'unsafe-inline' is
+// allowed for styles only (a narrow, documented relaxation); script-src stays
+// nonce-locked. Unauthenticated requests are redirected to /signin (pages) or
+// rejected with 401 (API) — the demo starts secure by default.
+export const proxy = auth((request) => {
+  const { pathname } = request.nextUrl;
+
+  if (!request.auth && !isPublicPath(pathname)) {
+    if (pathname.startsWith("/api")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const url = request.nextUrl.clone();
+    url.pathname = "/signin";
+    url.search = pathname !== "/" ? `?from=${encodeURIComponent(pathname)}` : "";
+    return NextResponse.redirect(url);
+  }
+
   const nonce = crypto.randomUUID().replace(/-/g, "");
   const isDev = process.env.NODE_ENV !== "production";
 
@@ -45,7 +72,7 @@ export function proxy(request: NextRequest) {
   );
 
   return response;
-}
+});
 
 export const config = {
   // Run on everything except static assets and the image optimizer.

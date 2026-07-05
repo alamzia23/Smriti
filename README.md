@@ -184,6 +184,10 @@ Push the repo to GitHub, import it in Vercel, and add the environment variables
 listed above in Project Settings, under Environment Variables. For GitHub OAuth in
 production, set the callback URL to `https://YOUR-DOMAIN/api/auth/callback/github`.
 
+## AI disclosure
+
+Built with AI assistance (Claude Code).
+
 <div align="center">
 Built for the Cognee "Where's My Context?" hackathon.
 </div>

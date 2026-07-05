@@ -224,11 +224,13 @@ export async function cogneeForget(opts: {
   dataId?: string;
   everything?: boolean;
 }): Promise<unknown> {
+  // Cognee's /forget expects snake_case: `dataset` (name) + `data_id`, or
+  // `everything`. (camelCase datasetName/dataId 422s.)
   const body: Record<string, unknown> = {};
   if (opts.everything) body.everything = true;
   else {
-    body.datasetName = datasetName();
-    if (opts.dataId) body.dataId = opts.dataId;
+    body.dataset = datasetName();
+    if (opts.dataId) body.data_id = opts.dataId;
   }
   return cogneeJson("POST", "/api/v1/forget", body, 30_000);
 }

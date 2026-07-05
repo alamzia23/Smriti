@@ -7,6 +7,9 @@ import { jsonError, jsonOk } from "@/lib/errors";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// Cognee calls can take 10-15s; pin the function budget so Vercel does not
+// time the request out (prod default varies by plan).
+export const maxDuration = 60;
 
 // Demo convenience: builds a sample resolved incident, signs it with the server
 // HMAC secret, and POSTs it to the REAL webhook — proving automatic, signed
